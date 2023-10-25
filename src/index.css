@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+.box {
+  position: absolute;
+  border: 3px dashed orangered;  
+  background-color: rgba(201, 34, 12, 0.5);  
+}
+
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

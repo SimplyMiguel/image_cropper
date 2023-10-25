@@ -1,0 +1,53 @@
+import "react-image-crop/dist/ReactCrop.css";
+import React, { useEffect, useRef, useState } from "react";
+import "../index.css";
+import exampleImage from "./exampleImage.png";
+import ReactCrop from "react-image-crop";
+
+const ImageCanvas = () => {
+  const [assignmentImage, setAssignmentImage] = useState(null);
+  const [crop, setCrop] = useState(null);
+
+  useEffect(() => {
+    setAssignmentImage(exampleImage);
+  }, []);
+
+  const scaleImageToFitParent = () => {
+    const image = document.getElementById("assignmentImage");
+    const parentRef = document.getElementById("parent");
+
+    const scale = Math.min(
+      (parentRef.offsetWidth * 0.97) / image.offsetWidth,
+      (parentRef.offsetHeight * 0.97) / image.offsetHeight
+    );
+
+    image.style.height = `${image.offsetHeight * scale}px`;
+    image.style.width = `${image.offsetWidth * scale}px`;
+  };
+
+  return (
+    <div
+      id="parent"
+      className="flex justify-center items-center bg-red-400 w-[100vw] h-[100vh]"
+    >
+      {assignmentImage && (
+        <ReactCrop
+          src={assignmentImage}
+          crop={crop}
+          onChange={(c) => {
+            setCrop(c);
+          }}
+          className="w-fit h-fit"
+        >
+          <img
+            id="assignmentImage"
+            src={assignmentImage}
+            onLoad={scaleImageToFitParent}
+          />
+        </ReactCrop>
+      )}
+    </div>
+  );
+};
+
+export default ImageCanvas;

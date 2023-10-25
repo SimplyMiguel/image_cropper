@@ -1,52 +1,105 @@
-import React, { useEffect, useRef } from "react";
-import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
+import "react-image-crop/dist/ReactCrop.css";
+import React, { useEffect, useRef, useState } from "react";
 import "../index.css";
 import exampleImage from "./exampleImage.png";
+import ReactCrop from "react-image-crop";
 
 const ImageCanvas = () => {
-  const parentRef = useRef(null);
-  const { editor, onReady } = useFabricJSEditor();
+  const [assignmentImage, setAssignmentImage] = useState(null);
+  const [crop, setCrop] = useState(null);
+  const [questionCoordinates, setQuestionCoordinates] = useState([]);
 
   useEffect(() => {
-    if (parentRef.current && editor) {
-      const parentWidth = parentRef.current.offsetWidth;
-      const parentHeight = parentRef.current.offsetHeight;
+    setAssignmentImage(exampleImage);
+  }, []);
 
-      fabric.Image.fromURL(exampleImage, function (img) {
-        editor.canvas.setWidth(Math.floor(parentWidth * 0.99));
-        editor.canvas.setHeight(Math.floor(parentHeight * 0.99));
+  useEffect(() => {
+    console.log("crop changed");
+  }, [crop]);
 
-        // Calculate the scale factors for width and height
-        const scaleFactorWidth = Math.floor(parentWidth * 0.98) / img.width;
-        const scaleFactorHeight = Math.floor(parentHeight * 0.98) / img.height;
+  const invalidCoord = (box1, box2) => {
+    const xOverlap = Math.max(
+      0,
+      Math.min(box1.x + box1.width, box2.x + box2.width) -
+        Math.max(box1.x, box2.x)
+    );
+    const yOverlap = Math.max(
+      0,
+      Math.min(box1.y + box1.height, box2.y + box2.height) -
+        Math.max(box1.y, box2.y)
+    );
+    const overlapArea = xOverlap * yOverlap;
+    return (
+      overlapArea > 0.05 * box1.width * box1.height ||
+      overlapArea > 0.05 * box2.width * box2.height
+    );
+  };
 
-        // Use the smaller scale factor to fit the image within the canvas
-        const scaleFactor = Math.min(scaleFactorWidth, scaleFactorHeight);
-
-        // Apply the scale factor to the image
-        img.scale(scaleFactor);
-
-        // Center the image on the canvas
-        img.set({
-          left: (editor.canvas.width - img.getScaledWidth()) / 2,
-          top: (editor.canvas.height - img.getScaledHeight()) / 2,
-          lockScalingX: true,
-          lockScalingY: true,
-          lockMovementX: true,
-          lockMovementY: true,
-        });
-
-        editor.canvas.add(img);
-        editor.canvas.renderAll();
-      });
+  const drawBox = () => {
+    for (const qc of questionCoordinates) {
+      if (invalidCoord(crop, qc)) {
+        return;
+      }
     }
-  }, [editor]);
+
+    // If no significant overlap with existing boxes, add the new crop
+    setQuestionCoordinates([
+      ...questionCoordinates,
+      {
+        x: crop.x,
+        y: crop.y,
+        width: crop.width,
+        height: crop.height,
+      },
+    ]);
+    setCrop(null);
+  };
+  const scaleImageToFitParent = () => {
+    const image = document.getElementById("assignmentImage");
+    const parentRef = document.getElementById("parent");
+
+    const scale = Math.min(
+      (parentRef.offsetWidth * 0.97) / image.offsetWidth,
+      (parentRef.offsetHeight * 0.97) / image.offsetHeight
+    );
+
+    image.style.height = `${image.offsetHeight * scale}px`;
+    image.style.width = `${image.offsetWidth * scale}px`;
+  };
 
   return (
-    <div ref={parentRef} className="w-[94vw] h-[94vh]">
-      <div className="w-fit h-fit bg-orange-400">
-        <FabricJSCanvas className="" onReady={onReady} />
-      </div>
+    <div
+      id="parent"
+      className="flex justify-center items-center bg-red-400 w-[100vw] h-[100vh]"
+    >
+      {assignmentImage && (
+        <ReactCrop
+          crop={crop}
+          onChange={(c) => {
+            setCrop(c);
+          }}
+          className="relative w-fit h-fit"
+          onDragEnd={drawBox}
+        >
+          <img
+            id="assignmentImage"
+            src={assignmentImage}
+            onLoad={scaleImageToFitParent}
+            className=""
+          />
+          {questionCoordinates.map((boxCoordinates, index) => (
+            <div
+              className="box"
+              style={{
+                left: `${boxCoordinates.x}px`,
+                top: `${boxCoordinates.y}px`,
+                width: `${boxCoordinates.width}px`,
+                height: `${boxCoordinates.height}px`,
+              }}
+            ></div>
+          ))}
+        </ReactCrop>
+      )}
     </div>
   );
 };
