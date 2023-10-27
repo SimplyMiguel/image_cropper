@@ -1,23 +1,34 @@
 import "react-image-crop/dist/ReactCrop.css";
 import React, { useEffect, useRef, useState } from "react";
 import "../index.css";
-import exampleImage from "./exampleImage.png";
 import ReactCrop from "react-image-crop";
+import exampleImagte from "./exampleImage.png";
 
-const ImageCanvas = () => {
-  const [assignmentImage, setAssignmentImage] = useState(null);
+const ImageCanvas = ({ image }) => {
+  // This is temporary, just to show the image inside not storybook
+  if (image === undefined) {
+    image = exampleImagte;
+  }
   const [crop, setCrop] = useState(null);
-  const [questionCoordinates, setQuestionCoordinates] = useState([]);
-
-  useEffect(() => {
-    setAssignmentImage(exampleImage);
-  }, []);
-
-  useEffect(() => {
-    console.log("crop changed");
-  }, [crop]);
+  const [cropCoordinates, setCropCoordinates] = useState([]);
 
   const invalidCoord = (box1, box2) => {
+    const image = document.getElementById("image");
+    box1 = {
+      x: (box1.x * image.offsetWidth),
+      y: (box1.y / image.offsetHeight),
+      width: (box1.width / image.offsetWidth),
+      height: (box1.height / image.offsetHeight),
+    }
+    box2 = {
+      x: (box2.x * image.offsetWidth),
+      y: (box2.y / image.offsetHeight),
+      width: (box2.width / image.offsetWidth),
+      height: (box2.height / image.offsetHeight),
+    }
+    // Why did we do the following??  I think it was to make sure that the boxes were not too small
+
+
     const xOverlap = Math.max(
       0,
       Math.min(box1.x + box1.width, box2.x + box2.width) -
@@ -35,27 +46,58 @@ const ImageCanvas = () => {
     );
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "z" && e.metaKey) {
+        setCropCoordinates((a) => a.slice(0, a.length - 1));
+      }
+    };
+
+    const handleResize = () => {
+      scaleImageToFitParent();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("resize", handleResize);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const drawBox = () => {
-    for (const qc of questionCoordinates) {
+    const image = document.getElementById("image");
+    if (
+      crop.width < image.offsetWidth * 0.02 ||
+      crop.height < image.offsetHeight * 0.02
+    ) {
+      return;
+    }
+    for (const qc of cropCoordinates) {
       if (invalidCoord(crop, qc)) {
         return;
       }
     }
 
-    // If no significant overlap with existing boxes, add the new crop
-    setQuestionCoordinates([
-      ...questionCoordinates,
-      {
-        x: crop.x,
-        y: crop.y,
-        width: crop.width,
-        height: crop.height,
-      },
-    ]);
+    // The window and image may vary in size depending on the screen size, so save x, y, width, and height as a percentage of the image size
+    const newCropInsert = {
+      x: crop.x / image.offsetWidth,
+      y: crop.y / image.offsetHeight,
+      width: crop.width / image.offsetWidth,
+      height: crop.height / image.offsetHeight,
+    };
+
+    console.log("newCropInsert:\n", newCropInsert);
+    // setCropCoordinates((a) => [
+    //   ...cropCoordinates,
+    //   newCropInsert,
+    // ]);
     setCrop(null);
   };
+
   const scaleImageToFitParent = () => {
-    const image = document.getElementById("assignmentImage");
+    const image = document.getElementById("image");
     const parentRef = document.getElementById("parent");
 
     const scale = Math.min(
@@ -64,7 +106,6 @@ const ImageCanvas = () => {
     );
 
     image.style.height = `${image.offsetHeight * scale}px`;
-    image.style.width = `${image.offsetWidth * scale}px`;
   };
 
   return (
@@ -72,7 +113,7 @@ const ImageCanvas = () => {
       id="parent"
       className="flex justify-center items-center bg-red-400 w-[100vw] h-[100vh]"
     >
-      {assignmentImage && (
+      {image && (
         <ReactCrop
           crop={crop}
           onChange={(c) => {
@@ -82,14 +123,14 @@ const ImageCanvas = () => {
           onDragEnd={drawBox}
         >
           <img
-            id="assignmentImage"
-            src={assignmentImage}
+            id="image"
+            src={image}
             onLoad={scaleImageToFitParent}
             className=""
           />
-          {questionCoordinates.map((boxCoordinates, index) => (
+          {/* {cropCoordinates.map((boxCoordinates) => (
             <div
-              className="box"
+              className="box relative"
               style={{
                 left: `${boxCoordinates.x}px`,
                 top: `${boxCoordinates.y}px`,
@@ -97,7 +138,7 @@ const ImageCanvas = () => {
                 height: `${boxCoordinates.height}px`,
               }}
             ></div>
-          ))}
+          ))} */}
         </ReactCrop>
       )}
     </div>

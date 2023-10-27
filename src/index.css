@@ -4,8 +4,9 @@
 
 .box {
   position: absolute;
-  border: 3px dashed orangered;  
-  background-color: rgba(201, 34, 12, 0.5);  
+  border: 2px dashed orangered;  
+  background-color: rgba(201, 34, 12, 0.25);  
+  border-radius: 2%;
 }
 
 

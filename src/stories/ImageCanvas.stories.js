@@ -1,15 +1,15 @@
 import ImageCanvas from './ImageCanvas';
+import exampleImage from './exampleImage.png';
+
 
 
 export default {
     title: 'MyStory/ImageCanvas',
     component: ImageCanvas
-    // tags: ['autodocs'],
   };
 
   export const primary = {
     args: {
-      primary: true,
-      label: 'Button',
+      assignmentImage: exampleImage,
     },
   };
