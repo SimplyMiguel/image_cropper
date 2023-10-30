@@ -2,33 +2,25 @@ import "react-image-crop/dist/ReactCrop.css";
 import React, { useEffect, useRef, useState } from "react";
 import "../index.css";
 import ReactCrop from "react-image-crop";
-import exampleImagte from "./exampleImage.png";
 
-const ImageCanvas = ({ image }) => {
-  // This is temporary, just to show the image inside not storybook
-  if (image === undefined) {
-    image = exampleImagte;
-  }
+const ImageCanvas = ({
+  image,
+  initialCropCoordinates = [],
+  onCoordinatesChange,
+}) => {
   const [crop, setCrop] = useState(null);
-  const [cropCoordinates, setCropCoordinates] = useState([]);
+  const [cropCoordinates, setCropCoordinates] = useState(
+    initialCropCoordinates
+  );
 
   const invalidCoord = (box1, box2) => {
     const image = document.getElementById("image");
-    box1 = {
-      x: (box1.x * image.offsetWidth),
-      y: (box1.y / image.offsetHeight),
-      width: (box1.width / image.offsetWidth),
-      height: (box1.height / image.offsetHeight),
-    }
     box2 = {
-      x: (box2.x * image.offsetWidth),
-      y: (box2.y / image.offsetHeight),
-      width: (box2.width / image.offsetWidth),
-      height: (box2.height / image.offsetHeight),
-    }
-    // Why did we do the following??  I think it was to make sure that the boxes were not too small
-
-
+      x: box2.x * image.offsetWidth,
+      y: box2.y * image.offsetHeight,
+      width: box2.width * image.offsetWidth,
+      height: box2.height * image.offsetHeight,
+    };
     const xOverlap = Math.max(
       0,
       Math.min(box1.x + box1.width, box2.x + box2.width) -
@@ -53,20 +45,14 @@ const ImageCanvas = ({ image }) => {
       }
     };
 
-    const handleResize = () => {
-      scaleImageToFitParent();
-    };
-
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("resize", handleResize);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  const drawBox = () => {
+  const addCoordinates = () => {
     const image = document.getElementById("image");
     if (
       crop.width < image.offsetWidth * 0.02 ||
@@ -88,11 +74,12 @@ const ImageCanvas = ({ image }) => {
       height: crop.height / image.offsetHeight,
     };
 
-    console.log("newCropInsert:\n", newCropInsert);
-    // setCropCoordinates((a) => [
-    //   ...cropCoordinates,
-    //   newCropInsert,
-    // ]);
+    const updatedCoordinates = [...cropCoordinates, newCropInsert];
+    setCropCoordinates(updatedCoordinates);
+    if (onCoordinatesChange) {
+      onCoordinatesChange(updatedCoordinates);
+    }
+    // setCropCoordinates((a) => [...cropCoordinates, newCropInsert]);
     setCrop(null);
   };
 
@@ -109,10 +96,7 @@ const ImageCanvas = ({ image }) => {
   };
 
   return (
-    <div
-      id="parent"
-      className="flex justify-center items-center bg-red-400 w-[100vw] h-[100vh]"
-    >
+    <div id="parent" className="flex justify-center items-center bg-red-400 ">
       {image && (
         <ReactCrop
           crop={crop}
@@ -120,25 +104,39 @@ const ImageCanvas = ({ image }) => {
             setCrop(c);
           }}
           className="relative w-fit h-fit"
-          onDragEnd={drawBox}
+          onDragEnd={addCoordinates}
         >
           <img
             id="image"
             src={image}
             onLoad={scaleImageToFitParent}
+            onChange={scaleImageToFitParent}
             className=""
           />
-          {/* {cropCoordinates.map((boxCoordinates) => (
+          {cropCoordinates.map((boxCoordinates) => (
             <div
               className="box relative"
+              // the box coordinates are now percanage of the image size, so we need to multiply by the image size to get the actual pixel coordinates
               style={{
-                left: `${boxCoordinates.x}px`,
-                top: `${boxCoordinates.y}px`,
-                width: `${boxCoordinates.width}px`,
-                height: `${boxCoordinates.height}px`,
+                left: `${
+                  boxCoordinates.x *
+                  document.getElementById("image").offsetWidth
+                }px`,
+                top: `${
+                  boxCoordinates.y *
+                  document.getElementById("image").offsetHeight
+                }px`,
+                width: `${
+                  boxCoordinates.width *
+                  document.getElementById("image").offsetWidth
+                }px`,
+                height: `${
+                  boxCoordinates.height *
+                  document.getElementById("image").offsetHeight
+                }px`,
               }}
             ></div>
-          ))} */}
+          ))}
         </ReactCrop>
       )}
     </div>
