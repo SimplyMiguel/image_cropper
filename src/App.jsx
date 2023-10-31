@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import ImageCanvas from "./stories/ImageCanvas";
-
-import exampleImage from "./stories/exampleImage.png";
+import ImageCanvas from "./components/ImageCrop/ImageCanvas";
+import exampleImage from "../src/stories/exampleImage.png";
 
 function App() {
   const [coord, setCoord] = useState([]);

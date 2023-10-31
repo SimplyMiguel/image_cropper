@@ -1,6 +1,6 @@
 import "react-image-crop/dist/ReactCrop.css";
 import React, { useEffect, useRef, useState } from "react";
-import "../index.css";
+import "../../index.css";
 import ReactCrop from "react-image-crop";
 
 const ImageCanvas = ({
@@ -96,7 +96,7 @@ const ImageCanvas = ({
   };
 
   return (
-    <div id="parent" className="flex justify-center items-center bg-red-400 ">
+    <div id="parent" className="p-2 flex justify-center items-center h-max w-max">
       {image && (
         <ReactCrop
           crop={crop}
